@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kenteken Letterspel</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --blue: #2196F3;
+            --yellow: #FFC107;
+            --green: #4CAF50;
+            --red: #f44336;
+            --orange: #FF9800;
+            --purple: #9C27B0;
+            --bg: #E3F2FD;
+            --plate-yellow: #F7D117;
+            --plate-blue: #003DA5;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Decorative background ── */
+        .bg-decor {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-decor span {
+            position: absolute;
+            font-size: 3rem;
+            opacity: .12;
+            animation: floatUp 12s linear infinite;
+        }
+        @keyframes floatUp {
+            0%   { transform: translateY(110vh) rotate(0deg); opacity: .12; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* ── Screens ── */
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        .screen.active { display: flex; }
+
+        /* ── Cards ── */
+        .card {
+            background: #fff;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,.10);
+            padding: 2.5rem 2rem;
+            max-width: 560px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            color: var(--blue);
+            font-size: 2.4rem;
+            margin-bottom: .5rem;
+        }
+        h2 {
+            font-family: 'Fredoka One', cursive;
+            color: var(--purple);
+            font-size: 1.6rem;
+            margin-bottom: 1rem;
+        }
+        p.sub { color: #555; font-size: 1.1rem; margin-bottom: 1.5rem; }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            padding: .85rem 2rem;
+            border: none;
+            border-radius: 999px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 1.15rem;
+            cursor: pointer;
+            transition: transform .15s, box-shadow .15s;
+            color: #fff;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .btn:active { transform: scale(.97); }
+        .btn-blue   { background: var(--blue);   box-shadow: 0 4px 0 #1565C0; }
+        .btn-green  { background: var(--green);  box-shadow: 0 4px 0 #2E7D32; }
+        .btn-orange { background: var(--orange); box-shadow: 0 4px 0 #E65100; }
+        .btn-purple { background: var(--purple); box-shadow: 0 4px 0 #6A1B9A; }
+        .btn-red    { background: var(--red);    box-shadow: 0 4px 0 #C62828; }
+
+        /* ── Name buttons ── */
+        .name-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+            max-width: 360px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .name-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: .5rem;
+            background: #fff;
+            border: 4px solid var(--blue);
+            border-radius: 1.5rem;
+            padding: 1.2rem 1rem;
+            cursor: pointer;
+            transition: transform .15s, border-color .15s, background .15s;
+            font-family: 'Nunito', sans-serif;
+        }
+        .name-btn:hover {
+            transform: scale(1.08);
+            border-color: var(--orange);
+            background: #FFF8E1;
+        }
+        .name-btn .avatar { font-size: 4rem; }
+        .name-btn .label  { font-size: 1.4rem; font-weight: 800; color: var(--blue); }
+
+        /* ── Letter grid ── */
+        .letter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: .75rem;
+            max-width: 500px;
+            margin: 1rem auto;
+        }
+        .letter-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.6rem;
+            color: var(--blue);
+            background: #E3F2FD;
+            border: 3px solid var(--blue);
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: transform .12s, background .12s, border-color .12s;
+            user-select: none;
+        }
+        .letter-cell:hover {
+            transform: scale(1.12);
+            background: #BBDEFB;
+        }
+        .letter-cell.selected {
+            background: var(--orange);
+            border-color: var(--orange);
+            color: #fff;
+            transform: scale(1.12);
+        }
+
+        /* ── License plate ── */
+        .plate-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+        .plate {
+            display: flex;
+            align-items: stretch;
+            background: var(--plate-yellow);
+            border: 4px solid #222;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0,0,0,.15);
+            height: 88px;
+            max-width: 420px;
+            width: 100%;
+        }
+        .plate-eu {
+            background: var(--plate-blue);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 4px 8px 6px;
+            min-width: 38px;
+        }
+        .plate-eu .stars { color: var(--plate-yellow); font-size: .55rem; letter-spacing: 1px; line-height: 1; }
+        .plate-eu .country-code { color: #fff; font-weight: 800; font-size: 1rem; margin-top: 2px; }
+
+        /* ── Country-specific plate styles ── */
+        .plate.plate-nl {
+            background: var(--plate-yellow);
+        }
+        .plate.plate-be {
+            background: #FFFFFF;
+            border-color: #CC0000;
+        }
+        .plate.plate-be .plate-eu {
+            background: var(--plate-blue);
+        }
+        .plate.plate-be .plate-char {
+            color: #CC0000;
+        }
+        .plate.plate-be .plate-dash {
+            color: #CC0000;
+        }
+        .plate.plate-de {
+            background: #FFFFFF;
+        }
+        .plate.plate-de .plate-eu {
+            background: var(--plate-blue);
+        }
+        .plate.plate-de .plate-char {
+            color: #000;
+        }
+        .plate.plate-de .plate-dash {
+            color: #000;
+        }
+
+        .plate-country-flag {
+            font-size: .7rem;
+            margin-top: 1px;
+            line-height: 1;
+        }
+        .plate-chars {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding: 0 12px;
+            gap: 0;
+        }
+        .plate-char {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.4rem;
+            color: #111;
+            cursor: default;
+            padding: 0 2px;
+            border-radius: 6px;
+            transition: background .15s, transform .15s, color .15s;
+            line-height: 1;
+            user-select: none;
+        }
+        .plate-char.clickable {
+            cursor: pointer;
+        }
+        .plate-char.clickable:hover {
+            background: rgba(255,255,255,.45);
+            transform: scale(1.1);
+        }
+        /* Every clicked letter gets this base style */
+        .plate-char.clicked {
+            font-weight: 900;
+            transform: scale(1.12);
+            border-radius: 8px;
+            pointer-events: none;
+            border: 3px solid rgba(0,0,0,.3);
+        }
+        .plate-char.clicked.found {
+            background: var(--green);
+            color: #fff !important;
+        }
+        .plate-char.clicked.wrong {
+            animation: shake .4s;
+            background: var(--red);
+            color: #fff !important;
+            opacity: .6;
+        }
+        .plate-dash {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.4rem;
+            color: #111;
+            padding: 0 2px;
+            line-height: 1;
+            min-width: 12px;
+            text-align: center;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        /* ── Score bar ── */
+        .score-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 500px;
+            width: 100%;
+            margin-bottom: 1rem;
+            padding: .5rem 1rem;
+            background: #fff;
+            border-radius: 999px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.08);
+        }
+        .score-bar .player-info {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-weight: 700;
+            color: var(--blue);
+        }
+        .score-bar .score-display {
+            display: flex;
+            align-items: center;
+            gap: .3rem;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--orange);
+        }
+        .score-bar .round-display {
+            font-weight: 700;
+            color: #888;
+            font-size: .95rem;
+        }
+
+        /* ── Progress dots ── */
+        .progress-dots {
+            display: flex;
+            gap: .5rem;
+            margin: 1rem 0;
+        }
+        .dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: background .3s, transform .3s;
+        }
+        .dot.done   { background: var(--green); transform: scale(1.15); }
+        .dot.active { background: var(--orange); transform: scale(1.25); }
+
+        /* ── Feedback overlay ── */
+        .feedback {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .3s;
+        }
+        .feedback.show {
+            opacity: 1;
+        }
+        .feedback-inner {
+            background: #fff;
+            border-radius: 2rem;
+            padding: 2.5rem 3rem;
+            text-align: center;
+            box-shadow: 0 12px 48px rgba(0,0,0,.2);
+            animation: popIn .35s ease-out;
+        }
+        @keyframes popIn {
+            0%   { transform: scale(.5); opacity: 0; }
+            100% { transform: scale(1);  opacity: 1; }
+        }
+        .feedback-icon { font-size: 4rem; }
+        .feedback-text {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.5rem;
+            margin-top: .5rem;
+        }
+        .feedback-text.correct { color: var(--green); }
+        .feedback-text.wrong   { color: var(--red); }
+
+        /* ── Instructions ── */
+        .instruction {
+            background: #FFF8E1;
+            border: 2px dashed var(--orange);
+            border-radius: 1rem;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            font-size: 1.05rem;
+            color: #333;
+        }
+        .instruction .emoji { font-size: 1.3rem; margin-right: .3rem; }
+
+        /* ── Drawing canvas ── */
+        .canvas-container {
+            position: relative;
+            margin: 1rem auto;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,.1);
+            border: 4px solid var(--blue);
+            touch-action: none;
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1;
+        }
+        #drawCanvas {
+            display: block;
+            background: #fff;
+            cursor: crosshair;
+            width: 100%;
+            height: 100%;
+        }
+        .canvas-tools {
+            display: flex;
+            gap: .75rem;
+            justify-content: center;
+            margin-top: .75rem;
+        }
+        .canvas-tools .btn { padding: .5rem 1.2rem; font-size: .95rem; }
+
+        /* ── Result screen ── */
+        .result-stars {
+            font-size: 3rem;
+            margin: .5rem 0;
+            animation: popIn .5s ease-out;
+        }
+        .result-score {
+            font-family: 'Fredoka One', cursive;
+            font-size: 3.5rem;
+            color: var(--orange);
+            margin: .5rem 0;
+        }
+        .result-label {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .result-detail {
+            background: #F5F5F5;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin: .75rem 0;
+            text-align: left;
+        }
+        .result-detail .row {
+            display: flex;
+            justify-content: space-between;
+            padding: .3rem 0;
+            font-weight: 600;
+        }
+
+        /* ── Confetti ── */
+        .confetti-piece {
+            position: fixed;
+            z-index: 200;
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            animation: confettiFall 2.5s ease-out forwards;
+        }
+        @keyframes confettiFall {
+            0%   { transform: translateY(-20vh) rotate(0deg) scale(1); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg) scale(.5); opacity: 0; }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 500px) {
+            .card { padding: 1.5rem 1rem; }
+            h1 { font-size: 1.8rem; }
+            .plate { height: 70px; }
+            .plate-char { font-size: 1.6rem; padding: 0 1px; }
+            .plate-dash { font-size: 1.6rem; }
+            .letter-grid { grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: .5rem; }
+            .letter-cell { font-size: 1.3rem; }
+        }
+
+        /* ── No letter message ── */
+        .no-letter-msg {
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 1rem;
+        }
+        .btn-skip {
+            margin-top: .75rem;
+        }
+
+        /* ── Celebration ── */
+        .celebrate {
+            animation: celebrate .6s ease-out;
+        }
+        @keyframes celebrate {
+            0%   { transform: scale(1); }
+            50%  { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Background decoration -->
+<div class="bg-decor" id="bgDecor"></div>
+
+<!-- Feedback overlay -->
+<div class="feedback" id="feedback">
+    <div class="feedback-inner">
+        <div class="feedback-icon" id="feedbackIcon"></div>
+        <div class="feedback-text" id="feedbackText"></div>
+    </div>
+</div>
+
+<!-- ═══════════════ SCREEN 1: Name ═══════════════ -->
+<div class="screen active" id="screenName">
+    <div class="card">
+        <h1>🚗 Kenteken Letterspel</h1>
+        <p class="sub">Leer letters herkennen op echte kentekens!</p>
+        <h2>Wie ben jij?</h2>
+        <div class="name-buttons">
+            <button class="name-btn" onclick="chooseName('Gijs','👦')">
+                <span class="avatar">👦</span>
+                <span class="label">Gijs</span>
+            </button>
+            <button class="name-btn" onclick="chooseName('Ruben','🧒')">
+                <span class="avatar">🧒</span>
+                <span class="label">Ruben</span>
+            </button>
+            <button class="name-btn" onclick="chooseName('Papa','👨')">
+                <span class="avatar">👨</span>
+                <span class="label">Papa</span>
+            </button>
+            <button class="name-btn" onclick="chooseName('Mama','👩')">
+                <span class="avatar">👩</span>
+                <span class="label">Mama</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ SCREEN 2: Letter choice ═══════════════ -->
+<div class="screen" id="screenLetter">
+    <div class="card">
+        <h2>Kies een letter om te oefenen</h2>
+        <p class="sub">Tik op de letter die je wilt leren, <span id="playerNameLabel"></span>!</p>
+        <div class="letter-grid" id="letterGrid"></div>
+    </div>
+</div>
+
+<!-- ═══════════════ SCREEN 3: Game rounds ═══════════════ -->
+<div class="screen" id="screenGame">
+    <div class="score-bar">
+        <div class="player-info">
+            <span id="gameAvatar">👦</span>
+            <span id="gameName"></span>
+        </div>
+        <div class="round-display" id="roundDisplay">Ronde 1 / 5</div>
+        <div class="score-display">⭐ <span id="scoreDisplay">0</span></div>
+    </div>
+    <div class="card">
+        <div class="instruction">
+            <span class="emoji">👆</span> Zoek de letter <strong id="targetLetterDisplay"></strong> op het kenteken!
+            <br><small id="hintText"></small>
+        </div>
+
+        <div class="progress-dots" id="progressDots"></div>
+
+        <div class="plate-wrapper">
+            <div class="plate" id="plateEl">
+                <div class="plate-eu" id="plateEu">
+                    <div class="stars">★ ★ ★<br>★ ★ ★<br>★ ★ ★<br>★ ★ ★</div>
+                    <div class="country-code" id="plateCountryCode">NL</div>
+                </div>
+                <div class="plate-chars" id="plateChars"></div>
+            </div>
+        </div>
+        <div id="plateCountryLabel" style="margin-top:.4rem;font-weight:700;color:#888;font-size:.9rem"></div>
+
+        <div id="gameActions"></div>
+    </div>
+</div>
+
+<!-- ═══════════════ SCREEN 4: Drawing ═══════════════ -->
+<div class="screen" id="screenDraw">
+    <div class="score-bar">
+        <div class="player-info">
+            <span id="drawAvatar">👦</span>
+            <span id="drawName"></span>
+        </div>
+        <div class="round-display">Bonus ronde!</div>
+        <div class="score-display">⭐ <span id="drawScoreDisplay">0</span></div>
+    </div>
+    <div class="card">
+        <h2>✏️ Teken de letter!</h2>
+        <div class="instruction">
+            <span class="emoji">🎨</span> Teken de letter <strong id="drawLetterDisplay"></strong> zo mooi als je kan!
+        </div>
+        <div class="canvas-container" id="canvasContainer">
+            <canvas id="drawCanvas"></canvas>
+        </div>
+        <div class="canvas-tools">
+            <button class="btn btn-red" onclick="clearCanvas()">🗑️ Wissen</button>
+            <button class="btn btn-green" onclick="checkDrawing()">✅ Klaar!</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ SCREEN 5: Results ═══════════════ -->
+<div class="screen" id="screenResult">
+    <div class="card">
+        <h1 id="resultTitle">Goed gedaan!</h1>
+        <div class="result-stars" id="resultStars"></div>
+        <div class="result-score" id="resultScore">0</div>
+        <div class="result-label">punten</div>
+        <div class="result-detail">
+            <div class="row"><span>Kenteken rondes</span><span id="resultPlate">0 / 5</span></div>
+            <div class="row"><span>Teken bonus</span><span id="resultDraw">0</span></div>
+        </div>
+        <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem">
+            <button class="btn btn-orange" onclick="playAgainNewLetter()">🔤 Andere letter</button>
+            <button class="btn btn-blue" onclick="playAgainSameLetter()">🔁 Nog een keer</button>
+            <button class="btn btn-purple" onclick="switchPlayer()">👤 Andere speler</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─────────────────── State ───────────────────
+let playerName = '';
+let playerAvatar = '';
+let targetLetter = '';
+let currentRound = 0;
+let score = 0;
+let plateScore = 0;
+let drawScore = 0;
+let roundPlates = [];
+let foundInRound = new Set();
+let totalTargetsInRound = 0;
+
+// ─────────────────── License plate systems per country ───────────────────
+const COUNTRIES = {
+    NL: {
+        name: 'Nederland',
+        flag: '🇳🇱',
+        code: 'NL',
+        cssClass: 'plate-nl',
+        // I, O, Q excluded on real Dutch plates
+        letters: 'ABCDEFGHJKLMNPRSTVWXYZ',
+        separator: '-',
+        formats: [
+            { segments: [2, 2, 2], types: ['D','L','L'] },   // 99-XX-XX
+            { segments: [2, 3, 1], types: ['L','D','L'] },   // XX-999-X
+            { segments: [1, 3, 2], types: ['L','D','L'] },   // X-999-XX
+            { segments: [2, 3, 1], types: ['L','D','L'] },   // XX-999-X
+            { segments: [2, 2, 2], types: ['L','D','L'] },   // XX-99-XX
+            { segments: [2, 2, 2], types: ['L','L','D'] },   // XX-XX-99
+        ]
+    },
+    BE: {
+        name: 'België',
+        flag: '🇧🇪',
+        code: 'B',
+        cssClass: 'plate-be',
+        // Belgian plates use all letters except I, O, U, W
+        letters: 'ABCDEFGHJKLMNPQRSTVXYZ',
+        separator: '-',
+        formats: [
+            { segments: [1, 3, 3], types: ['D','L','L'] },   // 1-ABC-123
+            { segments: [1, 3, 3], types: ['D','L','D'] },   // 1-ABC-123 (mixed)
+            { segments: [1, 3, 3], types: ['D','D','L'] },   // 1-123-ABC
+            { segments: [2, 3, 3], types: ['D','L','D'] },   // 12-ABC-12  (older)
+        ]
+    },
+    DE: {
+        name: 'Duitsland',
+        flag: '🇩🇪',
+        code: 'D',
+        cssClass: 'plate-de',
+        // German plates use letters; typically city code + letters + digits
+        letters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        separator: ' ',
+        formats: [
+            { segments: [2, 2, 4], types: ['L','L','D'] },   // AB CD 1234
+            { segments: [3, 2, 4], types: ['L','L','D'] },   // ABC DE 1234
+            { segments: [2, 2, 3], types: ['L','L','D'] },   // AB CD 123
+            { segments: [3, 1, 4], types: ['L','L','D'] },   // ABC D 1234
+            { segments: [1, 2, 4], types: ['L','L','D'] },   // A BC 1234
+        ]
+    }
+};
+
+const DIGITS = '0123456789';
+
+function randomChoice(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomDigit() {
+    return DIGITS[Math.floor(Math.random() * 10)];
+}
+
+function randomPlateLetter(country, exclude) {
+    const pool = country.letters.split('').filter(l => l !== exclude);
+    return randomChoice(pool);
+}
+
+/**
+ * Generate a plate for a specific country with a target letter count.
+ */
+function generatePlate(country, letter, count) {
+    const fmt = randomChoice(country.formats);
+    let chars = [];
+
+    // Find all letter positions
+    let letterPositions = [];
+    let pos = 0;
+    for (let s = 0; s < fmt.segments.length; s++) {
+        for (let i = 0; i < fmt.segments[s]; i++) {
+            if (fmt.types[s] === 'L') {
+                letterPositions.push(pos);
+            }
+            pos++;
+        }
+    }
+
+    // Build chars array with random content (no target letter)
+    pos = 0;
+    for (let s = 0; s < fmt.segments.length; s++) {
+        for (let i = 0; i < fmt.segments[s]; i++) {
+            if (fmt.types[s] === 'L') {
+                chars.push(randomPlateLetter(country, letter));
+            } else {
+                chars.push(randomDigit());
+            }
+            pos++;
+        }
+    }
+
+    // Place target letter 'count' times in random letter positions
+    if (count > 0 && letterPositions.length > 0) {
+        let shuffled = [...letterPositions].sort(() => Math.random() - .5);
+        let toPlace = Math.min(count, shuffled.length);
+        for (let i = 0; i < toPlace; i++) {
+            chars[shuffled[i]] = letter;
+        }
+    }
+
+    // Build segments array for display
+    let segments = [];
+    let idx = 0;
+    for (let s = 0; s < fmt.segments.length; s++) {
+        let seg = [];
+        for (let i = 0; i < fmt.segments[s]; i++) {
+            seg.push({ char: chars[idx], isLetter: fmt.types[s] === 'L', index: idx });
+            idx++;
+        }
+        segments.push(seg);
+    }
+
+    return { segments, separator: country.separator };
+}
+
+function countTargetInPlate(plateData, letter) {
+    let count = 0;
+    plateData.segments.forEach(seg => seg.forEach(ch => {
+        if (ch.char === letter) count++;
+    }));
+    return count;
+}
+
+/**
+ * Check if a letter can appear on plates for a given country
+ */
+function letterAvailableForCountry(country, letter) {
+    return country.letters.includes(letter);
+}
+
+/**
+ * Generate 5 round plates mixing countries, with varying target letter counts.
+ */
+function generateRoundPlatesFixed(letter) {
+    // Pick distribution of target counts
+    let counts = [0, 1, 1, 2, Math.random() < 0.5 ? 0 : 2];
+    counts.sort(() => Math.random() - .5);
+
+    // Build list of available countries for this letter
+    const countryKeys = Object.keys(COUNTRIES);
+    const availableCountries = countryKeys.filter(k => letterAvailableForCountry(COUNTRIES[k], letter));
+
+    return counts.map(c => {
+        // Pick a random country; prefer ones that support the letter, but allow count=0 from any
+        let countryKey;
+        if (c > 0 && availableCountries.length > 0) {
+            countryKey = randomChoice(availableCountries);
+        } else if (c === 0) {
+            countryKey = randomChoice(countryKeys);
+        } else {
+            // Letter not available anywhere, force count 0
+            countryKey = randomChoice(countryKeys);
+            c = 0;
+        }
+
+        const country = COUNTRIES[countryKey];
+        const plateData = generatePlate(country, letter, c);
+        const actual = countTargetInPlate(plateData, letter);
+        return {
+            segments: plateData.segments,
+            separator: plateData.separator,
+            targetCount: actual,
+            countryKey,
+            country
+        };
+    });
+}
+
+// ─────────────────── Screens ───────────────────
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+// ─────────────────── Name choice ───────────────────
+function chooseName(name, avatar) {
+    playerName = name;
+    playerAvatar = avatar;
+    document.getElementById('playerNameLabel').textContent = name;
+    playSound('select');
+    speakText(`Hallo ${name}!`);
+    setTimeout(() => {
+        showScreen('screenLetter');
+        buildLetterGrid();
+    }, 800);
+}
+
+// ─────────────────── Letter grid ───────────────────
+function buildLetterGrid() {
+    const grid = document.getElementById('letterGrid');
+    grid.innerHTML = '';
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
+        const cell = document.createElement('div');
+        cell.className = 'letter-cell';
+        cell.textContent = l;
+        cell.onclick = (e) => chooseLetter(l, e);
+        grid.appendChild(cell);
+    });
+}
+
+function chooseLetter(letter, e) {
+    // Highlight chosen
+    document.querySelectorAll('.letter-cell').forEach(c => c.classList.remove('selected'));
+    e.currentTarget.classList.add('selected');
+
+    targetLetter = letter;
+    speakText(`Je hebt de letter ${dutchLetterName(letter)} gekozen`);
+
+    setTimeout(() => startGame(), 1800);
+}
+
+function dutchLetterName(letter) {
+    const names = {
+        A:'aa', B:'bee', C:'see', D:'dee', E:'ee', F:'ef', G:'gee', H:'haa',
+        I:'ie', J:'jee', K:'kaa', L:'el', M:'em', N:'en', O:'oo', P:'pee',
+        Q:'kuu', R:'er', S:'es', T:'tee', U:'uu', V:'vee', W:'wee',
+        X:'iks', Y:'ij', Z:'zet'
+    };
+    return names[letter] || letter;
+}
+
+// ─────────────────── TTS ───────────────────
+let cachedDutchVoice = null;
+let voicesReady = false;
+
+function findDutchVoice() {
+    if (cachedDutchVoice) return cachedDutchVoice;
+    const voices = speechSynthesis.getVoices();
+    if (!voices.length) return null;
+
+    // Priority: nl-NL female, nl-NL any, nl-BE, nl-* , any with "dutch"/"nederland"
+    cachedDutchVoice =
+        voices.find(v => v.lang === 'nl-NL' && /female|vrouw/i.test(v.name)) ||
+        voices.find(v => v.lang === 'nl-NL') ||
+        voices.find(v => v.lang === 'nl-BE') ||
+        voices.find(v => v.lang.startsWith('nl')) ||
+        voices.find(v => /dutch|nederland/i.test(v.name)) ||
+        null;
+
+    if (cachedDutchVoice) {
+        console.log('Nederlandse stem gevonden:', cachedDutchVoice.name, cachedDutchVoice.lang);
+    }
+    return cachedDutchVoice;
+}
+
+function speakText(text) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'nl-NL';
+    utter.rate = 0.9;
+    utter.pitch = 1.1;
+
+    const voice = findDutchVoice();
+    if (voice) {
+        utter.voice = voice;
+        utter.lang = voice.lang; // match utterance lang to voice lang
+    }
+
+    speechSynthesis.speak(utter);
+}
+
+// Load voices — some browsers load them async
+if ('speechSynthesis' in window) {
+    function onVoicesReady() {
+        voicesReady = true;
+        findDutchVoice();
+    }
+    // Try immediately
+    if (speechSynthesis.getVoices().length) {
+        onVoicesReady();
+    }
+    // Also listen for async load
+    speechSynthesis.onvoiceschanged = onVoicesReady;
+}
+
+// ─────────────────── Sound effects (Web Audio API) ───────────────────
+let audioCtx = null;
+function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+}
+
+function playSound(type) {
+    try {
+        const ctx = getAudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        if (type === 'correct') {
+            // Happy ascending arpeggio: C5 → E5 → G5 → C6
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.12);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.35);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + i * 0.12);
+                osc.stop(ctx.currentTime + i * 0.12 + 0.4);
+            });
+        } else if (type === 'wrong') {
+            // Two descending low tones
+            const notes = [330, 220];
+            notes.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.18);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.3);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + i * 0.18);
+                osc.stop(ctx.currentTime + i * 0.18 + 0.35);
+            });
+        } else if (type === 'select') {
+            // Friendly pop/pling sound — two quick bright notes
+            const notes = [880, 1108.73]; // A5 → C#6
+            notes.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.25);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + i * 0.1);
+                osc.stop(ctx.currentTime + i * 0.1 + 0.3);
+            });
+        }
+    } catch (e) {
+        // Audio not supported — ignore silently
+    }
+}
+
+// ─────────────────── Game ───────────────────
+function startGame() {
+    currentRound = 0;
+    score = 0;
+    plateScore = 0;
+    drawScore = 0;
+    roundPlates = generateRoundPlatesFixed(targetLetter);
+
+    document.getElementById('gameName').textContent = playerName;
+    document.getElementById('gameAvatar').textContent = playerAvatar;
+    document.getElementById('scoreDisplay').textContent = '0';
+    document.getElementById('targetLetterDisplay').textContent = targetLetter;
+
+    showScreen('screenGame');
+    showRound();
+}
+
+function showRound() {
+    foundInRound = new Set();
+    const plate = roundPlates[currentRound];
+    totalTargetsInRound = plate.targetCount;
+
+    // Update round display
+    document.getElementById('roundDisplay').textContent = `Ronde ${currentRound + 1} / 5`;
+    document.getElementById('scoreDisplay').textContent = score;
+
+    // Update hint
+    const hint = document.getElementById('hintText');
+    if (totalTargetsInRound === 0) {
+        hint.textContent = `De letter ${targetLetter} staat niet op dit kenteken.`;
+    } else if (totalTargetsInRound === 1) {
+        hint.textContent = `Er staat 1x de letter ${targetLetter} op dit kenteken. Kun je hem vinden?`;
+    } else {
+        hint.textContent = `Er staan ${totalTargetsInRound}x de letter ${targetLetter} op dit kenteken!`;
+    }
+
+    // Progress dots
+    const dots = document.getElementById('progressDots');
+    dots.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i < currentRound ? ' done' : '') + (i === currentRound ? ' active' : '');
+        dots.appendChild(dot);
+    }
+
+    // Apply country styling to plate
+    const plateEl = document.getElementById('plateEl');
+    plateEl.className = 'plate ' + plate.country.cssClass;
+    document.getElementById('plateCountryCode').textContent = plate.country.code;
+    document.getElementById('plateCountryLabel').textContent = plate.country.flag + ' ' + plate.country.name;
+
+    // Render plate
+    renderPlate(plate);
+
+    // Actions area — always show the "not on plate" button
+    const actions = document.getElementById('gameActions');
+    actions.innerHTML = `
+        <div class="no-letter-msg">
+            <button class="btn btn-blue btn-skip" onclick="handleNoLetter()">
+                👀 De letter ${targetLetter} staat er niet op!
+            </button>
+        </div>
+    `;
+}
+
+function renderPlate(plate) {
+    const container = document.getElementById('plateChars');
+    container.innerHTML = '';
+    const sep = plate.separator || '-';
+
+    plate.segments.forEach((seg, si) => {
+        seg.forEach(ch => {
+            const span = document.createElement('span');
+            span.className = 'plate-char';
+            span.textContent = ch.char;
+            span.dataset.index = ch.index;
+            span.dataset.char = ch.char;
+
+            if (ch.isLetter) {
+                span.classList.add('clickable');
+                span.onclick = () => handleCharClick(span, ch);
+            }
+
+            container.appendChild(span);
+        });
+
+        // Add separator between segments
+        if (si < plate.segments.length - 1) {
+            const dash = document.createElement('span');
+            dash.className = 'plate-dash';
+            dash.textContent = sep;
+            container.appendChild(dash);
+        }
+    });
+}
+
+function handleCharClick(el, ch) {
+    // Skip if already clicked
+    if (el.classList.contains('clicked')) return;
+
+    // Mark as clicked (always — bold + highlighted)
+    el.classList.add('clicked');
+
+    if (ch.char === targetLetter) {
+        // Correct!
+        foundInRound.add(ch.index);
+        el.classList.add('found');
+        score++;
+        plateScore++;
+        document.getElementById('scoreDisplay').textContent = score;
+
+        playSound('correct');
+        showFeedback(true);
+
+        // Check if all found
+        if (foundInRound.size >= totalTargetsInRound) {
+            setTimeout(() => nextRound(), 1200);
+        }
+    } else {
+        // Wrong
+        el.classList.add('wrong');
+        playSound('wrong');
+        showFeedback(false);
+    }
+}
+
+function handleNoLetter() {
+    if (totalTargetsInRound === 0) {
+        // Correct - no target letter on this plate
+        score++;
+        plateScore++;
+        document.getElementById('scoreDisplay').textContent = score;
+        playSound('correct');
+        showFeedback(true);
+        setTimeout(() => nextRound(), 1200);
+    } else {
+        playSound('wrong');
+        showFeedback(false);
+    }
+}
+
+function nextRound() {
+    currentRound++;
+    if (currentRound >= 5) {
+        startDrawing();
+    } else {
+        showRound();
+    }
+}
+
+function showFeedback(correct) {
+    const fb = document.getElementById('feedback');
+    const icon = document.getElementById('feedbackIcon');
+    const text = document.getElementById('feedbackText');
+
+    const correctMessages = ['Super!', 'Goed zo!', 'Heel knap!', 'Top!', 'Fantastisch!'];
+    const wrongMessages = ['Probeer nog eens!', 'Bijna!', 'Niet helemaal...'];
+
+    if (correct) {
+        icon.textContent = '🎉';
+        text.textContent = randomChoice(correctMessages);
+        text.className = 'feedback-text correct';
+    } else {
+        icon.textContent = '🤔';
+        text.textContent = randomChoice(wrongMessages);
+        text.className = 'feedback-text wrong';
+    }
+
+    fb.classList.add('show');
+    setTimeout(() => fb.classList.remove('show'), 900);
+}
+
+// ─────────────────── Drawing ───────────────────
+let drawing = false;
+let drawCtx;
+let drawPaths = [];
+let currentPath = [];
+
+function startDrawing() {
+    showScreen('screenDraw');
+    document.getElementById('drawName').textContent = playerName;
+    document.getElementById('drawAvatar').textContent = playerAvatar;
+    document.getElementById('drawScoreDisplay').textContent = score;
+    document.getElementById('drawLetterDisplay').textContent = targetLetter;
+
+    const canvas = document.getElementById('drawCanvas');
+    const container = document.getElementById('canvasContainer');
+
+    // Wait a frame so the container has its layout size
+    requestAnimationFrame(() => {
+        const size = container.clientWidth;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = size * dpr;
+        canvas.height = size * dpr;
+        drawCtx = canvas.getContext('2d');
+        drawCtx.scale(dpr, dpr);
+        clearCanvas();
+
+        speakText(`Teken nu de letter ${targetLetter}`);
+
+        // Use Pointer Events — works for mouse, touch, and stylus
+        canvas.onpointerdown  = (e) => { e.preventDefault(); canvas.setPointerCapture(e.pointerId); startDraw(e); };
+        canvas.onpointermove  = (e) => { e.preventDefault(); doDraw(e); };
+        canvas.onpointerup    = (e) => { e.preventDefault(); canvas.releasePointerCapture(e.pointerId); stopDraw(); };
+        canvas.onpointercancel = () => stopDraw();
+    });
+}
+
+function getCanvasPos(e) {
+    const canvas = document.getElementById('drawCanvas');
+    const rect = canvas.getBoundingClientRect();
+    // Map screen coordinates to CSS pixel coordinates (not canvas pixel coords)
+    // drawCtx is already scaled by dpr, so we work in CSS pixels
+    return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+    };
+}
+
+function startDraw(e) {
+    drawing = true;
+    const pos = getCanvasPos(e);
+    currentPath = [pos];
+}
+
+function doDraw(e) {
+    if (!drawing) return;
+    const pos = getCanvasPos(e);
+    currentPath.push(pos);
+
+    // Draw line
+    drawCtx.strokeStyle = '#333';
+    drawCtx.lineWidth = 6;
+    drawCtx.lineCap = 'round';
+    drawCtx.lineJoin = 'round';
+
+    if (currentPath.length >= 2) {
+        const prev = currentPath[currentPath.length - 2];
+        drawCtx.beginPath();
+        drawCtx.moveTo(prev.x, prev.y);
+        drawCtx.lineTo(pos.x, pos.y);
+        drawCtx.stroke();
+    }
+}
+
+function stopDraw() {
+    if (drawing && currentPath.length > 1) {
+        drawPaths.push([...currentPath]);
+    }
+    drawing = false;
+    currentPath = [];
+}
+
+function clearCanvas() {
+    const canvas = document.getElementById('drawCanvas');
+    const container = document.getElementById('canvasContainer');
+    const w = container.clientWidth;
+    const h = container.clientHeight || w; // square
+
+    if (!drawCtx) drawCtx = canvas.getContext('2d');
+
+    // Clear entire canvas buffer
+    drawCtx.save();
+    drawCtx.setTransform(1, 0, 0, 1, 0, 0);
+    drawCtx.clearRect(0, 0, canvas.width, canvas.height);
+    drawCtx.restore();
+
+    // Draw light guide lines in CSS pixel space
+    drawCtx.strokeStyle = '#ddd';
+    drawCtx.lineWidth = 1;
+    drawCtx.setLineDash([6, 6]);
+    // Horizontal center
+    drawCtx.beginPath();
+    drawCtx.moveTo(0, w / 2);
+    drawCtx.lineTo(w, w / 2);
+    drawCtx.stroke();
+    // Vertical center
+    drawCtx.beginPath();
+    drawCtx.moveTo(w / 2, 0);
+    drawCtx.lineTo(w / 2, w);
+    drawCtx.stroke();
+    drawCtx.setLineDash([]);
+
+    drawPaths = [];
+    currentPath = [];
+}
+
+function checkDrawing() {
+    // Analyze the drawing
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+
+    // Count drawn pixels (non-white, non-guide-line)
+    let drawnPixels = 0;
+    let minX = canvas.width, maxX = 0, minY = canvas.height, maxY = 0;
+
+    for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+            const i = (y * canvas.width + x) * 4;
+            const r = pixels[i], g = pixels[i+1], b = pixels[i+2], a = pixels[i+3];
+            // Check if pixel is drawn (dark enough and not the light guide)
+            if (a > 100 && (r < 200 || g < 200 || b < 200)) {
+                drawnPixels++;
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+        }
+    }
+
+    const totalStrokes = drawPaths.length;
+    const hasEnoughPixels = drawnPixels > 100;
+    const drawingWidth = maxX - minX;
+    const drawingHeight = maxY - minY;
+    const hasSomeSize = drawingWidth > 30 && drawingHeight > 30;
+
+    // Simple heuristic: did the child draw something substantial?
+    // We're generous - if they drew something recognizable in size, give points
+    let success = hasEnoughPixels && hasSomeSize && totalStrokes > 0;
+
+    if (success) {
+        drawScore = 5;
+        score += 5;
+        showFeedback(true);
+        speakText('Heel goed getekend!');
+    } else {
+        showFeedback(false);
+        speakText('Probeer de letter wat groter te tekenen.');
+        return; // Let them try again
+    }
+
+    setTimeout(() => showResults(), 1500);
+}
+
+// ─────────────────── Results ───────────────────
+function showResults() {
+    showScreen('screenResult');
+
+    const maxPlateScore = roundPlates.reduce((sum, p) => sum + (p.targetCount === 0 ? 1 : p.targetCount), 0);
+
+    document.getElementById('resultScore').textContent = score;
+    document.getElementById('resultPlate').textContent = `${plateScore} punten`;
+    document.getElementById('resultDraw').textContent = `${drawScore} punten`;
+
+    // Stars based on score
+    const pct = score / (maxPlateScore + 5);
+    let stars = '';
+    if (pct >= 0.9) stars = '⭐⭐⭐';
+    else if (pct >= 0.6) stars = '⭐⭐';
+    else if (pct >= 0.3) stars = '⭐';
+    else stars = '💪';
+    document.getElementById('resultStars').textContent = stars;
+
+    // Title
+    const titles = {
+        3: `Geweldig, ${playerName}! 🏆`,
+        2: `Goed gedaan, ${playerName}! 👏`,
+        1: `Prima, ${playerName}! 👍`,
+        0: `Goed geprobeerd, ${playerName}! 💪`
+    };
+    document.getElementById('resultTitle').textContent = titles[stars.split('⭐').length - 1] || titles[0];
+
+    launchConfetti();
+    speakText(`Goed gedaan ${playerName}! Je hebt ${score} punten!`);
+}
+
+function playAgainNewLetter() {
+    showScreen('screenLetter');
+}
+
+function playAgainSameLetter() {
+    startGame();
+}
+
+function switchPlayer() {
+    showScreen('screenName');
+}
+
+// ─────────────────── Confetti ───────────────────
+function launchConfetti() {
+    const colors = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E9'];
+    for (let i = 0; i < 50; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.background = randomChoice(colors);
+        piece.style.animationDelay = Math.random() * 1.5 + 's';
+        piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+        piece.style.width = (8 + Math.random() * 10) + 'px';
+        piece.style.height = (8 + Math.random() * 10) + 'px';
+        piece.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 4000);
+    }
+}
+
+// ─────────────────── Background decoration ───────────────────
+function initBgDecor() {
+    const emojis = ['🚗','🚙','🏎️','🚕','🔤','⭐','🅰️','🅱️','🌟','🎯'];
+    const container = document.getElementById('bgDecor');
+    for (let i = 0; i < 12; i++) {
+        const span = document.createElement('span');
+        span.textContent = randomChoice(emojis);
+        span.style.left = Math.random() * 100 + '%';
+        span.style.animationDelay = Math.random() * 12 + 's';
+        span.style.animationDuration = (10 + Math.random() * 8) + 's';
+        span.style.fontSize = (1.5 + Math.random() * 2) + 'rem';
+        container.appendChild(span);
+    }
+}
+
+initBgDecor();
+</script>
+</body>
+</html>
